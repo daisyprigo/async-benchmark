@@ -11,7 +11,7 @@
 
     public void Setup()
     {
-        testFileList = GetTestFileList(@"m:\LightroomArchive\Lightroom CC\");
+        testFileList = GetTestFileList(@"c:\Windows\System32\");
     }
 
     /// <summary>
