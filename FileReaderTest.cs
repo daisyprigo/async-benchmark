@@ -24,6 +24,7 @@
             return Task.Run(() => {
 
                 var bytes = File.ReadAllBytes(file);
+                Console.WriteLine($"File read: {file}, bytes: {bytes.Length}");
                 return;
                 });
         });
@@ -37,6 +38,7 @@
         ReadFilesConcurrently(async (file, ct) =>
             {
                 var bytes = await File.ReadAllBytesAsync(file, ct);
+                Console.WriteLine($"File read: {file}, bytes: {bytes.Length}");
                 return;
             });
     }
@@ -81,6 +83,6 @@
     /// <returns></returns>
     private static string[] GetTestFileList(string folderPath)
     {
-        return Directory.GetFiles(folderPath, "*.*", SearchOption.AllDirectories);
+        return Directory.GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly);
     }
 }
