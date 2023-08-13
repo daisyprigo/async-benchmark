@@ -2,7 +2,7 @@
 
 [MemoryDiagnoser(true)]
 [ThreadingDiagnoser]
-public class IOSimulator
+public class FileReader
 {
     private string[] testFileList;
 
