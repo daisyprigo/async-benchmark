@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Attributes;
+﻿using Async_Benchmark;
+using BenchmarkDotNet.Attributes;
 
 [MemoryDiagnoser(true)]
 [ThreadingDiagnoser]
@@ -19,12 +20,6 @@ public class FileReader
     public int MinOperationDurationMs;
 
     public int SimulatedProcessingTimeInIterations;
-
-    [GlobalSetup]
-    public void Setup()
-    {
-        testFileList = GetTestFileList(@"c:\windows\system32");
-    }
 
     public void SimulateSyncIOOperations()
     {
@@ -97,7 +92,8 @@ public class FileReader
     private void ReadFilesConcurrently(Func<string, CancellationToken, Task<byte[]>> fileRead)
     {
         var rand = new Random();
-        var filesToLoad = GetRandomTestFileSample();
+
+        var filesToLoad = Helpers.GetRandomTestFileSample(@"c:\windows\system32", ConcurrentOperationCount);
         var runningTasks = new List<Task>(ConcurrentOperationCount);
         foreach (var file in filesToLoad)
         {
@@ -114,27 +110,5 @@ public class FileReader
         // wait for all read operations to complete
         Task.WaitAll(runningTasks.ToArray());
     }
-    /// <summary>
-    /// Gets a small set of random files to use for a test run
-    /// </summary>
-    /// <returns></returns>
-    private IEnumerable<string> GetRandomTestFileSample()
-    {
-        var testFileSet = new List<string>(ConcurrentOperationCount);
-        var rand = new Random();
-        for (int i = 0;i< ConcurrentOperationCount;i++)
-        {
-            testFileSet.Add(testFileList[rand.Next(testFileList.Length)]);
-        }
-        return testFileSet;
-    }
-    /// <summary>
-    /// Gets a full list of files from some folder we want to use as source of test files to read
-    /// </summary>
-    /// <param name="folderPath"></param>
-    /// <returns></returns>
-    private static string[] GetTestFileList(string folderPath)
-    {
-        return Directory.GetFiles(folderPath);
-    }
+    
 }
