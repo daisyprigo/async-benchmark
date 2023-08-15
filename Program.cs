@@ -6,8 +6,8 @@ var mt = 4;
 ThreadPool.SetMaxThreads(mt, mt);
 
 var t = new ParallelRequestSimulator();
-t.TotalOperationCount = 1000;
-t.RequestsPerSec = 100;
+t.TotalOperationCount = 10000;
+t.RequestsPerSec = 1000;
 t.ExecuteTest(true);
 
 
