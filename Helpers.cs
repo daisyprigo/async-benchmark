@@ -31,7 +31,9 @@ namespace Async_Benchmark
         public static void SimulateComputation(TimeSpan duration)
         {
             var sw = Stopwatch.StartNew();
-            while (sw.Elapsed < duration) { }
+            while (sw.Elapsed < duration) {
+                continue;
+            }
         }
     }
 }

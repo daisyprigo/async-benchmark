@@ -15,6 +15,8 @@ namespace Async_Benchmark
 
         public int MaxIntervalBetweenOperationsMs;
 
+        public int RequestsPerSec = 100;
+
         private int fileCounter;
 
         public void ExecuteTest(bool async)
@@ -26,7 +28,12 @@ namespace Async_Benchmark
             // we store all the tasks that we launched here
             var runningTasks = new List<Task>(TotalOperationCount);
 
-            var sw = Stopwatch.StartNew();
+            var perfSw = Stopwatch.StartNew();
+            var requestBurstSw = Stopwatch.StartNew();
+            int requestsBurstCounter = 0;
+            var burstDuration = TimeSpan.FromMilliseconds(100);
+            int maxRequestInBurst = (int)(RequestsPerSec / (1 / burstDuration.TotalSeconds));
+
             foreach (var file in filesToLoad)
             {
                 // here we are only "launching" the read operation, but we are not waiting for it to complete
@@ -41,19 +48,31 @@ namespace Async_Benchmark
                 {
                     Thread.Sleep(rand.Next(MaxIntervalBetweenOperationsMs));
                 }
+                if (++requestsBurstCounter >= maxRequestInBurst) 
+                {
+                    // rest the burst
+                    requestsBurstCounter = 0;
+                    // pause the main thread until the full second has passed since the start
+                    var sleepTime = burstDuration - requestBurstSw.Elapsed;
+                    if (sleepTime > TimeSpan.Zero)
+                    {
+                        Thread.Sleep(sleepTime);
+                    }
+                    requestBurstSw.Restart();
+                }
 
             }
-            Console.WriteLine($"Finished launching all operations, took: {sw.Elapsed.TotalSeconds} seconds.");
+            Console.WriteLine($"Finished launching all operations, took: {perfSw.Elapsed.TotalSeconds} seconds.");
             for (int i = 0; i < 1; i++)
             {
                 Console.Beep();
             }
             
 
-            sw.Restart();
+            perfSw.Restart();
             // wait for all read operations to complete
             Task.WaitAll(runningTasks.ToArray());
-            Console.WriteLine($"Finished waiting for all tasks to complete, took: {sw.Elapsed.TotalSeconds} seconds.");
+            Console.WriteLine($"Finished waiting for all tasks to complete, took: {perfSw.Elapsed.TotalSeconds} seconds.");
         }
 
         private async Task ReadFileContent(string path, bool async)
