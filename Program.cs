@@ -3,9 +3,11 @@ x.Setup();
 x.ConcurrentOperationCount = 100000;
 x.MaxIntervalBetweenOperationsMs = 0;
 
-Thread.Sleep(2000);
+//var t = 8;
+//ThreadPool.SetMaxThreads(t,t);
+//ThreadPool.SetMinThreads(t,t);
 
-x.ReadFilesASync();
+x.ReadFilesSync();
 return;
 
 
