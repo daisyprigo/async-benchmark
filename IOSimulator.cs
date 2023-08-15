@@ -93,7 +93,7 @@ public class FileReader
     {
         var rand = new Random();
 
-        var filesToLoad = Helpers.GetRandomTestFileSample(@"c:\windows\system32", ConcurrentOperationCount);
+        var filesToLoad = Helpers.GetRandomTestFileSample(@"c:\windows\system32", ConcurrentOperationCount, false);
         var runningTasks = new List<Task>(ConcurrentOperationCount);
         foreach (var file in filesToLoad)
         {

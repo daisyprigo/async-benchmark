@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Microsoft.Diagnostics.Tracing.Parsers.Clr;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,9 +14,9 @@ namespace Async_Benchmark
         /// Gets a small set of random files to use for a test run
         /// </summary>
         /// <returns></returns>
-        public static IEnumerable<string> GetRandomTestFileSample(string dirPath, int fileCount)
+        public static IEnumerable<string> GetRandomTestFileSample(string dirPath, int fileCount, bool subDirs)
         {
-            var testFileList = GetTestFileList(dirPath);
+            var testFileList = Directory.GetFiles(dirPath, "*.*", subDirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
             var testFileSet = new List<string>(fileCount);
             
             var rand = new Random();
@@ -24,14 +26,12 @@ namespace Async_Benchmark
             }
             return testFileSet;
         }
-        /// <summary>
-        /// Gets a full list of files from some folder we want to use as source of test files to read
-        /// </summary>
-        /// <param name="folderPath"></param>
-        /// <returns></returns>
-        private static string[] GetTestFileList(string folderPath)
+
+
+        public static void SimulateComputation(TimeSpan duration)
         {
-            return Directory.GetFiles(folderPath);
+            var sw = Stopwatch.StartNew();
+            while (sw.Elapsed < duration) { }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Async_Benchmark;
+using System.Diagnostics;
 
 public class FileReaderTest
 {
@@ -12,12 +13,7 @@ public class FileReaderTest
     public int MaxIntervalBetweenOperationsMs;
 
     private int fileCounter = 0;
-
-    public void Setup()
-    {
-        testFileList = GetTestFileList(@"c:\Windows\System32\");
-    }
-
+ 
     /// <summary>
     /// Reads files concurrently, using ThreadPool threads, using a synchronous read.
     /// </summary>
@@ -53,7 +49,7 @@ public class FileReaderTest
     {
         var rand = new Random();
         // a random list of files that we will use for the test
-        var filesToLoad = GetRandomTestFileSample();
+        var filesToLoad = Helpers.GetRandomTestFileSample(@"c:\windows\system32", ConcurrentOperationCount, false);
         // we store all the tasks that we launched here
         var runningTasks = new List<Task>(ConcurrentOperationCount);
 
