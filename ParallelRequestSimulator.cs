@@ -4,29 +4,55 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Async_Benchmark
 {
+    internal record CounterSnapshot(bool IsAsync, DateTime TimeStamp, int JobsNotStarted, int JobsAtStage1, int JobsAtStage2, int JobsAtStage3, int JobsCompleted);
+
     internal class ParallelRequestSimulator
     {
         public int MaxParallelOperationCount;
-
-        public int TotalOperationCount;
-
-        public int MaxIntervalBetweenOperationsMs;
 
         public int RequestsPerSec = 100;
 
         private int fileCounter;
 
-        public void ExecuteTest(bool async)
+        private int jobsNotStarted = 0;
+        private int jobsAtStage1 = 0;
+        private int jobsAtStage2 = 0;
+        private int jobsAtStage3 = 0;
+        private int jobsCompleted = 0;
+        private List<CounterSnapshot> snapshots = new List<CounterSnapshot>();
+
+        bool stopLoggingCounters = false;
+
+        private void LogCounters(bool isAsync)
+        {
+            while (!stopLoggingCounters) 
+            {
+                var snapshot = new CounterSnapshot(
+                    IsAsync: isAsync,
+                    TimeStamp: DateTime.Now,
+                    JobsNotStarted: this.jobsNotStarted,
+                    JobsAtStage1: this.jobsAtStage1,
+                    JobsAtStage2: this.jobsAtStage2,
+                    JobsAtStage3: this.jobsAtStage3,
+                    JobsCompleted: this.jobsCompleted);
+
+                snapshots.Add(snapshot);
+                Thread.Sleep(TimeSpan.FromSeconds(0.1));
+            }
+            
+        }
+
+        public List<CounterSnapshot> ExecuteTest(bool useAsyncIO, IEnumerable<string> filesToLoad)
         {
             var rand = new Random();
-            // a random list of files that we will use for the test
-            //var filesToLoad = Helpers.GetRandomTestFileSample(@"c:\windows\system32", TotalOperationCount);
-            var filesToLoad = Helpers.GetRandomTestFileSample(@"m:\LightroomArchive\Lightroom CC\", TotalOperationCount, true);
+           
+            //var filesToLoad = Helpers.GetRandomTestFileSample(@"m:\LightroomArchive\Lightroom CC\", TotalOperationCount, true);
             // we store all the tasks that we launched here
-            var runningTasks = new List<Task>(TotalOperationCount);
+            var runningTasks = new List<Task>();
 
             var perfSw = Stopwatch.StartNew();
             var requestBurstSw = Stopwatch.StartNew();
@@ -34,20 +60,20 @@ namespace Async_Benchmark
             var burstDuration = TimeSpan.FromMilliseconds(100);
             int maxRequestInBurst = (int)(RequestsPerSec / (1 / burstDuration.TotalSeconds));
 
+            Thread counterLoggingThread = new Thread(() => this.LogCounters(useAsyncIO));
+            counterLoggingThread.Name = "Counter monitoring thread";
+            counterLoggingThread.Start();
+
             foreach (var file in filesToLoad)
             {
                 // here we are only "launching" the read operation, but we are not waiting for it to complete
                 // how the operation will be executed (sync vs async) will be determined by the implementation that is passed to us as "fileRead"
-                var task = Task.Run(async () => await ReadFileContent(file, async));
+                Interlocked.Increment(ref jobsNotStarted);
+                var task = Task.Run(async () => await ReadFileContent(file, useAsyncIO));
                 //var task = Task.Run(async () => await SimulateIO(async));
                 // ignore for now
                 task.ConfigureAwait(false);
                 runningTasks.Add(task);
-                // Wait a little bit between read operations, to simulate a distribution of incoming requests over time
-                if (MaxIntervalBetweenOperationsMs > 0)
-                {
-                    Thread.Sleep(rand.Next(MaxIntervalBetweenOperationsMs));
-                }
                 if (++requestsBurstCounter >= maxRequestInBurst) 
                 {
                     // rest the burst
@@ -67,33 +93,56 @@ namespace Async_Benchmark
             {
                 Console.Beep();
             }
-            
-
             perfSw.Restart();
             // wait for all read operations to complete
             Task.WaitAll(runningTasks.ToArray());
+
+            // stopping the counter thread and waiting for it
+            this.stopLoggingCounters = true;
+            counterLoggingThread.Join();
+
             Console.WriteLine($"Finished waiting for all tasks to complete, took: {perfSw.Elapsed.TotalSeconds} seconds.");
+            return snapshots;
         }
 
         private async Task ReadFileContent(string path, bool async)
         {
             var sw = Stopwatch.StartNew();
-            byte[] bytes;
+            byte[] bytes = Array.Empty<byte>();
 
-            // simulate some time spent processing the request before IO
+            // Stage 1: simulate some time spent processing the request before IO
+            Interlocked.Decrement(ref jobsNotStarted);
+            Interlocked.Increment(ref jobsAtStage1);
             Helpers.SimulateComputation(TimeSpan.FromMilliseconds(50));
 
-            // do the IO
+            // Stage 2: do the IO
+            Interlocked.Decrement(ref jobsAtStage1);
+            Interlocked.Increment(ref jobsAtStage2);
             if (async)
+                // this does not block the current thread, because it uses an async method
                 bytes = await File.ReadAllBytesAsync(path).ConfigureAwait(false);
             else
+                // this DOES block the current thread, because we use a sync method
                 bytes = File.ReadAllBytes(path);
 
-            // simulate some time done post processing on the request
+            //var delay = TimeSpan.FromMilliseconds(500);
+            //if (async)
+            //    // this does not block the thread
+            //    await Task.Delay(delay);
+            //else
+            //    // this blocks the thread
+            //    Thread.Sleep(delay);
+
+            // Stage 3: simulate some time done post processing on the request
+            Interlocked.Decrement(ref jobsAtStage2);
+            Interlocked.Increment(ref jobsAtStage3);
             Helpers.SimulateComputation(TimeSpan.FromMilliseconds(50));
 
             var count = Interlocked.Increment(ref fileCounter);
             Console.WriteLine($"{count} - file read: {path}, bytes: {bytes.Length}, time-ms: {sw.ElapsedMilliseconds}");
+
+            Interlocked.Decrement(ref jobsAtStage3);
+            Interlocked.Increment(ref jobsCompleted);
             return;
         }
 

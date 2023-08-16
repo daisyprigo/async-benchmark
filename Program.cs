@@ -1,14 +1,34 @@
 ﻿
 using Async_Benchmark;
 
-var mt = 4;
+var mt = 8;
 
+ThreadPool.SetMinThreads(mt, mt);
 ThreadPool.SetMaxThreads(mt, mt);
 
-var t = new ParallelRequestSimulator();
-t.TotalOperationCount = 10000;
-t.RequestsPerSec = 1000;
-t.ExecuteTest(true);
+// a random list of files that we will use for the test
+var filesToLoad = Helpers.GetRandomTestFileSample(@"c:\windows\system32", 1000, false);
+
+var results = new List<List<CounterSnapshot>>();
+
+foreach (var useAsync in new bool[] { true, false})
+{
+    var t = new ParallelRequestSimulator();
+    t.RequestsPerSec = 100;
+    results.Add(t.ExecuteTest(useAsync, filesToLoad));
+}
+
+foreach (var runResults in results)
+{
+
+    Console.WriteLine("Run results:");
+    foreach (var snapshot in runResults)
+    {
+        Console.WriteLine(snapshot);
+    }
+}
+
+
 
 
 return;
