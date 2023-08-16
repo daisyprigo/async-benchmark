@@ -6,6 +6,16 @@ var mt = 8;
 ThreadPool.SetMinThreads(mt, mt);
 ThreadPool.SetMaxThreads(mt, mt);
 
+// warm up the threadpool
+Parallel.For(0, mt * 2, (i) =>
+    {
+        Thread.SpinWait(1000);
+        Thread.Sleep(100);
+    
+    }
+
+);
+
 // a random list of files that we will use for the test
 var filesToLoad = Helpers.GetRandomTestFileSample(@"c:\windows\system32", 1000, false);
 
