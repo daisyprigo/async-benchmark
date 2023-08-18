@@ -8,7 +8,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Async_Benchmark
 {
-    internal record CounterSnapshot(bool IsAsync, DateTime TimeStamp, int TimePoint, int JobsNotStarted, int JobsAtStage1, int JobsAtStage2, int JobsAtStage3, int JobsCompleted);
+    internal record CounterSnapshot(bool IsAsync, DateTime TimeStamp, int TimePoint, int JobsNotStarted, int JobsAtStage1, int JobsAtStage2, int JobsAtStage3, int JobsCompleted, int AvailableWorkerThreads, int AvailableCompletionThreads);
 
     internal class ParallelRequestSimulator
     {
@@ -39,6 +39,7 @@ namespace Async_Benchmark
 
             void CreateSnapshot(bool isAsync)
             {
+                ThreadPool.GetAvailableThreads(out int workerThreads, out int completionThreads);
                 var snapshot = new CounterSnapshot(
                                     IsAsync: isAsync,
                                     TimeStamp: DateTime.Now,
@@ -47,7 +48,9 @@ namespace Async_Benchmark
                                     JobsAtStage1: this.jobsAtStage1,
                                     JobsAtStage2: this.jobsAtStage2,
                                     JobsAtStage3: this.jobsAtStage3,
-                                    JobsCompleted: this.jobsCompleted);
+                                    JobsCompleted: this.jobsCompleted,
+                                    AvailableWorkerThreads: workerThreads,
+                                    AvailableCompletionThreads: completionThreads);
 
                 snapshots.Add(snapshot);
             }

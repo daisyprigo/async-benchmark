@@ -37,7 +37,7 @@ foreach (var runResults in results)
     foreach (var snapshot in runResults)
     {
         Console.WriteLine(snapshot);
-        csvRows.Add($"{snapshot.IsAsync},{snapshot.TimePoint},{snapshot.JobsNotStarted},{snapshot.JobsAtStage1},{snapshot.JobsAtStage2},{snapshot.JobsAtStage3},{snapshot.JobsCompleted}");
+        csvRows.Add($"{snapshot.IsAsync},{snapshot.TimePoint},{snapshot.JobsNotStarted},{snapshot.JobsAtStage1},{snapshot.JobsAtStage2},{snapshot.JobsAtStage3},{snapshot.JobsCompleted},{snapshot.AvailableWorkerThreads},{snapshot.AvailableCompletionThreads}");
     }
 }
 
