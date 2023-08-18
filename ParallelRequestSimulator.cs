@@ -8,7 +8,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Async_Benchmark
 {
-    internal record CounterSnapshot(bool IsAsync, DateTime TimeStamp, int JobsNotStarted, int JobsAtStage1, int JobsAtStage2, int JobsAtStage3, int JobsCompleted);
+    internal record CounterSnapshot(bool IsAsync, DateTime TimeStamp, int TimePoint, int JobsNotStarted, int JobsAtStage1, int JobsAtStage2, int JobsAtStage3, int JobsCompleted);
 
     internal class ParallelRequestSimulator
     {
@@ -29,21 +29,28 @@ namespace Async_Benchmark
 
         private void LogCounters(bool isAsync)
         {
-            while (!stopLoggingCounters) 
+            var timePoint = 0;
+            while (!stopLoggingCounters)
+            {
+                CreateSnapshot(isAsync);
+                Thread.Sleep(TimeSpan.FromSeconds(0.01));
+            }
+            CreateSnapshot(isAsync);
+
+            void CreateSnapshot(bool isAsync)
             {
                 var snapshot = new CounterSnapshot(
-                    IsAsync: isAsync,
-                    TimeStamp: DateTime.Now,
-                    JobsNotStarted: this.jobsNotStarted,
-                    JobsAtStage1: this.jobsAtStage1,
-                    JobsAtStage2: this.jobsAtStage2,
-                    JobsAtStage3: this.jobsAtStage3,
-                    JobsCompleted: this.jobsCompleted);
+                                    IsAsync: isAsync,
+                                    TimeStamp: DateTime.Now,
+                                    TimePoint: timePoint++,
+                                    JobsNotStarted: this.jobsNotStarted,
+                                    JobsAtStage1: this.jobsAtStage1,
+                                    JobsAtStage2: this.jobsAtStage2,
+                                    JobsAtStage3: this.jobsAtStage3,
+                                    JobsCompleted: this.jobsCompleted);
 
                 snapshots.Add(snapshot);
-                Thread.Sleep(TimeSpan.FromSeconds(0.1));
             }
-            
         }
 
         public List<CounterSnapshot> ExecuteTest(bool useAsyncIO, IEnumerable<string> filesToLoad)
