@@ -28,7 +28,7 @@ foreach (var useAsync in new bool[] { true, false})
 
 
 var csvRows = new List<string>();
-csvRows.Add("IsAsync,TimePoint,JobsNotStarted,JobsAtStage1,JobsAtStage2,JobsAtStage3,JobsCompleted");
+csvRows.Add("IsAsync,TimePoint,JobsNotStarted,JobsAtStage1,JobsAtStage2,JobsAtStage3,JobsCompleted,ThreadCount,CompletedWorkItemsInTP,PendingWorkItemsInTP");
 
 foreach (var runResults in results)
 {
@@ -37,7 +37,7 @@ foreach (var runResults in results)
     foreach (var snapshot in runResults)
     {
         Console.WriteLine(snapshot);
-        csvRows.Add($"{snapshot.IsAsync},{snapshot.TimePoint},{snapshot.JobsNotStarted},{snapshot.JobsAtStage1},{snapshot.JobsAtStage2},{snapshot.JobsAtStage3},{snapshot.JobsCompleted},{snapshot.AvailableWorkerThreads},{snapshot.AvailableCompletionThreads}");
+        csvRows.Add($"{snapshot.IsAsync},{snapshot.TimePoint},{snapshot.JobsNotStarted},{snapshot.JobsAtStage1},{snapshot.JobsAtStage2},{snapshot.JobsAtStage3},{snapshot.JobsCompleted},{snapshot.ThreadCount},{snapshot.CompletedWorkItemsInTP},{snapshot.PendingWorkItemsInTP}");
     }
 }
 
